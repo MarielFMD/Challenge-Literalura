@@ -3,6 +3,7 @@ package com.aluracursos.literalura.principal;
 import com.aluracursos.literalura.model.Datos;
 import com.aluracursos.literalura.model.DatosLibro;
 import com.aluracursos.literalura.model.Libro;
+import com.aluracursos.literalura.repository.LibroRepository;
 import com.aluracursos.literalura.service.ConsumoAPI;
 import com.aluracursos.literalura.service.ConvierteDatos;
 
@@ -12,10 +13,15 @@ import java.util.Scanner;
 public class Principal {
 
     private static final String URL_BASE = "https://gutendex.com/books";
+    private final LibroRepository repositorio;//revisar por que me hizo agregar esto intellij
     private ConsumoAPI consumoAPI = new ConsumoAPI();
     private ConvierteDatos conversor = new ConvierteDatos();
     private Scanner teclado = new Scanner(System.in);
     private String json;
+
+    public Principal(LibroRepository libroRepository) {
+        this.repositorio = libroRepository;
+    }
 
 
     public void mostrarDatosDesdeApi() {
@@ -99,6 +105,7 @@ public class Principal {
             Libro libro = new Libro(libroBuscado.get());
             System.out.println(libro);
             //guardar libro en base de datos
+            repositorio.save(libro);
         } else {
             System.out.println("Libro no encontrado");
         }

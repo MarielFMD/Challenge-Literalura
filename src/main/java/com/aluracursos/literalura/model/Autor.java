@@ -1,9 +1,21 @@
 package com.aluracursos.literalura.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name="autores")
+
 public class Autor {
-    String nombre;
-    String fechaDeNacimiento;
-    String fechaDeFallecimiento;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long Id;
+    @Column(unique = true)
+    private String nombre;
+    private String fechaDeNacimiento;
+    private String fechaDeFallecimiento;
+
+    public Autor() {
+    }
 
     public Autor (DatosAutor datos){
         this.nombre = datos.nombre();

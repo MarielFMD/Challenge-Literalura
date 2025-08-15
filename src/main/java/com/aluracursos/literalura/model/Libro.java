@@ -1,12 +1,27 @@
 package com.aluracursos.literalura.model;
 
+import jakarta.persistence.*;
+
 import java.util.Optional;
 
+@Entity
+@Table(name="libros")
+
 public class Libro {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+
+    private long Id;
+    @Column(unique = true)//corresponde al atributo titulo
     private String titulo;
     private String autor;
     private String idioma;
     private double numeroDeDescargas;
+
+    public Libro() {
+    }
 
     public Libro (DatosLibro datos){
         this.titulo = datos.titulo();
