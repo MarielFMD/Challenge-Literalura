@@ -8,9 +8,15 @@ import java.net.http.HttpResponse;
 
 public class ConsumoAPI {
     public String obtenerDatos(String url) {
-        HttpClient client = HttpClient.newHttpClient();
+        HttpClient client = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.ALWAYS)
+                .build();
+
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
+                .header("Accept", "application/json")
+                .header("User-Agent", "Java 11 HttpClient")  // agrega User-Agent
+                .GET()
                 .build();
         HttpResponse<String> response = null;
         try {
@@ -25,4 +31,5 @@ public class ConsumoAPI {
         String json = response.body();
         return json;
     }
+
 }
