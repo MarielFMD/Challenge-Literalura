@@ -5,7 +5,10 @@ import com.aluracursos.literalura.repository.AutorRepository;
 import com.aluracursos.literalura.repository.LibroRepository;
 import com.aluracursos.literalura.service.ConsumoAPI;
 import com.aluracursos.literalura.service.ConvierteDatos;
+import org.springframework.dao.DataAccessException;
 
+import java.io.IOException;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
@@ -132,29 +135,26 @@ public class Principal {
     }
 
     private void listarAutoresVivos() {
-        List<Autor> todosLosAutores = autorRepositorio.findAll();
-        System.out.println("Ingrese un año: ");
-        int anio = teclado.nextInt();
-        teclado.nextLine();
-        List<Autor> vivos = todosLosAutores.stream()
-                .filter(autor -> {
-                    try {
-                        int nacimiento = Integer.parseInt(autor.getFechaDeNacimiento());
-                        String fallecimientoStr = autor.getFechaDeFallecimiento();
-                        return nacimiento <= anio &&
-                                (fallecimientoStr == null || fallecimientoStr.isEmpty()
-                                        || Integer.parseInt(fallecimientoStr) >= anio);
-                    } catch (NumberFormatException e) {
-                        return false;
-                    }
-                })
-                .toList();
+        try {
+            System.out.println("Ingrese un año: \n");
+            int anio = teclado.nextInt();
+            teclado.nextLine();
 
-        if (vivos.isEmpty()) {
-            System.out.println("No hay autores vivos en el año " + anio + "\n");
-        } else {
-            System.out.println("Autores vivos en " + anio + ":\n");
-            vivos.forEach(System.out::println); // usa el toString() de Autor
+            List<Autor> vivos = autorRepositorio
+                    .findByFechaDeNacimientoLessThanEqualAndFechaDeFallecimientoIsNullOrFechaDeFallecimientoGreaterThanEqual(anio, anio);
+
+            if (vivos.isEmpty()) {
+                System.out.println("No hay autores vivos en el año " + anio + "\n");
+            } else {
+                System.out.println("Autores vivos en " + anio + ":\n");
+                vivos.forEach(System.out::println);
+            }
+        }
+        catch(InputMismatchException e) {
+            System.out.println("Error: Debe ingresar un número válido para el año.");
+            teclado.nextLine();
+        } catch (Exception e) {
+            System.out.println("Ocurrió un error al listar los autores: " + e.getMessage());
         }
     }
 
@@ -193,48 +193,61 @@ public class Principal {
             """);
     }
 
-    //Busqueda por titulo
+
     private void buscarPorTitulo() {
-        System.out.println("Ingrese el título del libro: ");
-        var tituloLibro = teclado.nextLine();
-        var libroEncontrado = libroRepositorio.findByTituloContainingIgnoreCase(tituloLibro);
-        if (libroEncontrado != null) {
-            System.out.println("El libro ya existe en la base de datos.\n");
+        try {
+            System.out.println("Ingrese el título del libro: ");
+            var tituloLibro = teclado.nextLine();
+            teclado.nextLine();
+            if (tituloLibro.isEmpty()) {
+                System.out.println("Error: ingrese un título.");
+                return;
+            }
+            var libroEncontrado = libroRepositorio.findByTituloContainingIgnoreCase(tituloLibro);
+            if (libroEncontrado != null) {
+                System.out.println("El libro ya existe en la base de datos.\n");
+            } else {
+                var json = consumoAPI.obtenerDatos(URL_BASE + "?search=" + tituloLibro.replace(" ", "+"));
+                var datosBusqueda = conversor.obtenerDatos(json, Datos.class);
+                Optional<DatosLibro> libroBuscado = datosBusqueda.resultados().stream()
+                        .filter(l -> l.titulo().toUpperCase().contains(tituloLibro.toUpperCase()))
+                        .findFirst();
+
+                //guarda libro nuevo en el repositorio
+                if (libroBuscado.isPresent()) {
+
+                    System.out.println("Libro encontrado.\n");
+                    Libro libro = new Libro(libroBuscado.get());
+                    //si el autor ya está en la base de datos
+                    if (libroBuscado.get().autor() != null && !libroBuscado.get().autor().isEmpty()) {
+                        DatosAutor datosAutor = libroBuscado.get().autor().get(0);
+                        //busca autor en la base de datos
+                        Autor autor = autorRepositorio.findByNombre(datosAutor.nombre())
+                                .orElseGet(() -> {
+                                    Autor aNuevo = new Autor(datosAutor);
+                                    autorRepositorio.save(aNuevo);
+                                    return aNuevo;
+                                });
+
+                        libro.setAutor(autor);
+                        autor.agregarLibro(libro);
+                        autorRepositorio.save(autor);
+                    } else {
+
+                        libroRepositorio.save(libro);
+                    }
+                    System.out.println(libro);
+
                 } else {
-            var json = consumoAPI.obtenerDatos(URL_BASE + "?search=" + tituloLibro.replace(" ", "+"));
-            var datosBusqueda = conversor.obtenerDatos(json, Datos.class);
-            Optional<DatosLibro> libroBuscado = datosBusqueda.resultados().stream()
-                    .filter(l -> l.titulo().toUpperCase().contains(tituloLibro.toUpperCase()))
-                    .findFirst();
-
-            //guarda libro nuevo en el repositorio
-            if (libroBuscado.isPresent()) {
-
-                System.out.println("Libro encontrado.\n");
-                Libro libro = new Libro(libroBuscado.get());
-                //si el autor ya está en la base de datos
-                if (libroBuscado.get().autor() != null && !libroBuscado.get().autor().isEmpty()) {
-                    DatosAutor datosAutor = libroBuscado.get().autor().get(0);
-                    //busca autor en la base de datos
-                    Autor autor = autorRepositorio.findByNombre(datosAutor.nombre())
-                            .orElseGet(() -> {
-                                Autor aNuevo = new Autor(datosAutor);
-                                autorRepositorio.save(aNuevo);
-                                return aNuevo;
-                            });
-
-                    libro.setAutor(autor);
-                    autor.agregarLibro(libro);
-                    autorRepositorio.save(autor);
-                } else {
-
-                    libroRepositorio.save(libro);
+                    System.out.println("Libro no encontrado.\n");
                 }
-                System.out.println(libro);
-
-            }else {
-                System.out.println("Libro no encontrado.\n");
             }
         }
-    }
-}
+        catch (IOException e) {
+            System.out.println("Error al conectar con la API: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Error al acceder a la base de datos: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Ocurrió un error inesperado: " + e.getMessage());
+        }
+}}

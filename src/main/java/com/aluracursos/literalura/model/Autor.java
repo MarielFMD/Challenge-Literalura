@@ -14,8 +14,8 @@ public class Autor {
     private long Id;
     @Column(unique = true)
     private String nombre;
-    private String fechaDeNacimiento;
-    private String fechaDeFallecimiento;
+    private Integer fechaDeNacimiento;
+    private Integer fechaDeFallecimiento;
 
     public Autor() {
     }
@@ -30,8 +30,8 @@ public class Autor {
 
     public Autor (DatosAutor datos){
         this.nombre = datos.nombre();
-        this.fechaDeNacimiento = datos.fechaDeNacimiento();
-        this.fechaDeFallecimiento = datos.fechaDeFallecimiento();
+        this.fechaDeNacimiento = Integer.parseInt(datos.fechaDeNacimiento());
+        this.fechaDeFallecimiento = Integer.parseInt(datos.fechaDeFallecimiento());
     }
 
     @Override
@@ -52,11 +52,11 @@ public class Autor {
         return nombre;
     }
 
-    public String getFechaDeNacimiento() {
+    public Integer getFechaDeNacimiento() {
         return fechaDeNacimiento;
     }
 
-    public String getFechaDeFallecimiento() {
+    public Integer getFechaDeFallecimiento() {
         return fechaDeFallecimiento;
     }
 }

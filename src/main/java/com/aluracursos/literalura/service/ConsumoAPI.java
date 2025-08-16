@@ -7,7 +7,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class ConsumoAPI {
-    public String obtenerDatos(String url) {
+    public String obtenerDatos(String url) throws IOException, InterruptedException {
         HttpClient client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.ALWAYS)
                 .build();
@@ -19,14 +19,9 @@ public class ConsumoAPI {
                 .GET()
                 .build();
         HttpResponse<String> response = null;
-        try {
+
             response = client
                     .send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
 
         String json = response.body();
         return json;
