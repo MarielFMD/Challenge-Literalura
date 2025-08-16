@@ -52,11 +52,4 @@ public class Autor {
         return nombre;
     }
 
-    public Integer getFechaDeNacimiento() {
-        return fechaDeNacimiento;
-    }
-
-    public Integer getFechaDeFallecimiento() {
-        return fechaDeFallecimiento;
-    }
 }

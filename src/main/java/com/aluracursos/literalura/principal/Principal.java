@@ -16,7 +16,7 @@ import java.util.Scanner;
 public class Principal {
 
     private static final String URL_BASE = "https://gutendex.com/books";
-    private final LibroRepository libroRepositorio;//revisar por que me hizo agregar esto intellij
+    private final LibroRepository libroRepositorio;
     private final AutorRepository autorRepositorio;
     private ConsumoAPI consumoAPI = new ConsumoAPI();
     private ConvierteDatos conversor = new ConvierteDatos();
@@ -29,14 +29,8 @@ public class Principal {
     }
 
 
-    public void mostrarDatosDesdeApi() {
-
-        /*json = consumoAPI.obtenerDatos(URL_BASE);
-        System.out.println(json);
-        var datos = conversor.obtenerDatos(json, Datos.class);
-        System.out.println(datos);
-        */
-
+    public void iniciarAplicacion() {
+        mostrarEncabezado();
 
         while (true) {
             mostrarMenu();
@@ -123,12 +117,19 @@ public class Principal {
             }
 
             // Buscar libros
-            List<Libro> libros = libroRepositorio.findByIdiomaIgnoreCase(idiomaCodigo);
-            if (libros.isEmpty()) {
-                System.out.println("No hay libros registrados en " + idiomaNombre + ".\n");
-            } else {
-                System.out.println("Se encontraron " + libros.size() + " libros en " + idiomaNombre + ":\n");
-                libros.forEach(System.out::println);
+            try {
+                List<Libro> libros = libroRepositorio.findByIdiomaIgnoreCase(idiomaCodigo);
+                if (libros.isEmpty()) {
+                    System.out.println("No hay libros registrados en " + idiomaNombre + ".\n");
+                } else {
+                    System.out.println("Se encontraron " + libros.size() + " libros en " + idiomaNombre + ":\n");
+                    libros.forEach(System.out::println);
+                }
+            }catch(InputMismatchException e) {
+                System.out.println("Error: Debe ingresar un número válido para el año.");
+                teclado.nextLine();
+            } catch (Exception e) {
+                System.out.println("Ocurrió un error al listar los autores: " + e.getMessage());
             }
         }
 
@@ -160,21 +161,33 @@ public class Principal {
 
 
     private void listarAutores() {
-        List<Autor> autoresRegistrados = autorRepositorio.findAll();
-        if(autoresRegistrados.isEmpty()){
-            System.out.println("No hay ningún libro registrado.\n");
-        }else {
-            System.out.println(autoresRegistrados);
+        try {
+            List<Autor> autoresRegistrados = autorRepositorio.findAll();
+            if (autoresRegistrados.isEmpty()) {
+                System.out.println("No hay ningún libro registrado.\n");
+            } else {
+                System.out.println(autoresRegistrados);
+            }
+        }catch (DataAccessException e) {
+            System.out.println("Error al acceder a la base de datos: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Ocurrió un error inesperado: " + e.getMessage());
         }
 
     }
 
     private void listarLibros() {
-        List<Libro> librosRegistrados = libroRepositorio.findAll();
-        if(librosRegistrados.isEmpty()){
-            System.out.println("No hay ningún autor registrado.\n");
-        }else {
-            System.out.println(librosRegistrados);
+        try {
+            List<Libro> librosRegistrados = libroRepositorio.findAll();
+            if (librosRegistrados.isEmpty()) {
+                System.out.println("No hay ningún autor registrado.\n");
+            } else {
+                System.out.println(librosRegistrados);
+            }
+        }catch (DataAccessException e) {
+            System.out.println("Error al acceder a la base de datos: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Ocurrió un error inesperado: " + e.getMessage());
         }
     }
 
@@ -191,6 +204,15 @@ public class Principal {
             | 6 - Salir                     |
             +-------------------------------+
             """);
+    }
+
+    private void mostrarEncabezado(){
+        System.out.println("""
+        *****************************************
+        * ¡Bienvenido a Literalura!         *
+        * Tu biblioteca personal          *
+        *****************************************
+        """);
     }
 
 
